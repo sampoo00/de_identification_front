@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // API Key 타입 정의
 interface ApiKey {
@@ -80,38 +81,50 @@ export default function KeysPage() {
     };
 
     return (
-        <div className="max-w-4xl mx-auto px-6 py-12">
+        <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="max-w-4xl mx-auto px-6 py-12"
+        >
             <div className="mb-10">
                 <h1 className="text-3xl font-bold text-white mb-2">API Keys</h1>
                 <p className="text-gray-400">Manage your secret keys for accessing GEMINI via API.</p>
             </div>
 
-            {newlyCreatedSecret && (
-                <div className="mb-8 p-6 bg-green-900/20 border border-green-800 rounded-xl relative">
-                    <h3 className="text-green-400 font-semibold mb-2">새로운 API 키가 생성되었습니다!</h3>
-                    <p className="text-sm text-gray-300 mb-4">
-                        이 시크릿 키는 보안을 위해 <strong>지금 단 한 번만</strong> 표시됩니다. 안전한 곳에 복사해 두세요.
-                    </p>
-                    <div className="flex items-center gap-4 bg-gray-950 p-4 border border-gray-800 rounded-lg">
-                        <code className="text-blue-400 text-lg flex-1">{newlyCreatedSecret}</code>
-                        <button
-                            onClick={() => {
-                                navigator.clipboard.writeText(newlyCreatedSecret);
-                                alert('복사되었습니다!');
-                            }}
-                            className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-md transition-colors text-sm"
-                        >
-                            Copy
-                        </button>
-                    </div>
-                    <button
-                        onClick={() => setNewlyCreatedSecret(null)}
-                        className="absolute top-4 right-4 text-gray-500 hover:text-white"
+            <AnimatePresence>
+                {newlyCreatedSecret && (
+                    <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="mb-8 p-6 bg-green-900/20 border border-green-800 rounded-xl relative overflow-hidden"
                     >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>
-                </div>
-            )}
+                        <h3 className="text-green-400 font-semibold mb-2">새로운 API 키가 생성되었습니다!</h3>
+                        <p className="text-sm text-gray-300 mb-4">
+                            이 시크릿 키는 보안을 위해 <strong>지금 단 한 번만</strong> 표시됩니다. 안전한 곳에 복사해 두세요.
+                        </p>
+                        <div className="flex items-center gap-4 bg-gray-950 p-4 border border-gray-800 rounded-lg">
+                            <code className="text-blue-400 text-lg flex-1">{newlyCreatedSecret}</code>
+                            <button
+                                onClick={() => {
+                                    navigator.clipboard.writeText(newlyCreatedSecret);
+                                    alert('복사되었습니다!');
+                                }}
+                                className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-md transition-colors text-sm"
+                            >
+                                Copy
+                            </button>
+                        </div>
+                        <button
+                            onClick={() => setNewlyCreatedSecret(null)}
+                            className="absolute top-4 right-4 text-gray-500 hover:text-white"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden shadow-2xl">
                 <div className="p-6 border-b border-gray-800 flex justify-between items-center sm:flex-row flex-col gap-4">
@@ -143,21 +156,29 @@ export default function KeysPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-800/50">
-                                {keys.map((key) => (
-                                    <tr key={key.id} className="hover:bg-gray-800/30 transition-colors group">
-                                        <td className="px-4 py-5 text-gray-200 font-medium">{key.name}</td>
-                                        <td className="px-4 py-5 font-mono text-gray-500">{maskSecret(key.secret)}</td>
-                                        <td className="px-4 py-5 text-gray-500">{key.createdAt}</td>
-                                        <td className="px-4 py-5 text-right">
-                                            <button
-                                                onClick={() => handleRevokeKey(key.id)}
-                                                className="text-red-400 hover:text-red-300 opacity-80 group-hover:opacity-100 transition-opacity"
-                                            >
-                                                Revoke
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
+                                <AnimatePresence>
+                                    {keys.map((key) => (
+                                        <motion.tr
+                                            key={key.id}
+                                            initial={{ opacity: 0, x: -10 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: 10 }}
+                                            className="hover:bg-gray-800/30 transition-colors group"
+                                        >
+                                            <td className="px-4 py-5 text-gray-200 font-medium">{key.name}</td>
+                                            <td className="px-4 py-5 font-mono text-gray-500">{maskSecret(key.secret)}</td>
+                                            <td className="px-4 py-5 text-gray-500">{key.createdAt}</td>
+                                            <td className="px-4 py-5 text-right">
+                                                <button
+                                                    onClick={() => handleRevokeKey(key.id)}
+                                                    className="text-red-400 hover:text-red-300 opacity-80 group-hover:opacity-100 transition-opacity"
+                                                >
+                                                    Revoke
+                                                </button>
+                                            </td>
+                                        </motion.tr>
+                                    ))}
+                                </AnimatePresence>
                             </tbody>
                         </table>
                     )}
@@ -204,6 +225,6 @@ export default function KeysPage() {
                     </div>
                 </div>
             )}
-        </div>
+        </motion.div>
     );
 }

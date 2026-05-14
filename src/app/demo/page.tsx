@@ -2,6 +2,8 @@
 
 import { useState, useRef } from 'react';
 import { processDeidentify } from '@/lib/api';
+import { useDebugErrorTrap } from '@/hooks/useErrorTrap';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function DemoPage() {
     const [prompt, setPrompt] = useState('');
@@ -16,13 +18,37 @@ export default function DemoPage() {
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // Phase 5: Error Trap & Hook Validation (5+ limit)
+    const { reportError, resetErrorTrap } = useDebugErrorTrap(5);
+    const MAX_FILE_SIZE_MB = 10;
+
+    const validateFile = (file: File): boolean => {
+        if (!file.type.startsWith('image/')) {
+            const msg = '이미지 파일(JPG, PNG)만 업로드 가능합니다.';
+            setError(msg);
+            reportError(msg);
+            return false;
+        }
+        const fileSizeMB = file.size / (1024 * 1024);
+        if (fileSizeMB > MAX_FILE_SIZE_MB) {
+            const msg = `파일 크기가 너무 큽니다. (현재: ${fileSizeMB.toFixed(1)}MB / 최대: ${MAX_FILE_SIZE_MB}MB)`;
+            setError(msg);
+            reportError(msg);
+            return false;
+        }
+        return true;
+    };
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
             const file = e.target.files[0];
-            setImageFile(file);
-            setPreviewUrl(URL.createObjectURL(file));
-            setResultUrl(null); // 새로운 이미지 업로드 시 결과 초기화
-            setError(null);
+            if (validateFile(file)) {
+                setImageFile(file);
+                setPreviewUrl(URL.createObjectURL(file));
+                setResultUrl(null); // 새로운 이미지 업로드 시 결과 초기화
+                setError(null);
+                resetErrorTrap(); // 정상 업로드 시 에러 카운터 초기화
+            }
         }
     };
 
@@ -30,11 +56,12 @@ export default function DemoPage() {
         e.preventDefault();
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
             const file = e.dataTransfer.files[0];
-            if (file.type.startsWith('image/')) {
+            if (validateFile(file)) {
                 setImageFile(file);
                 setPreviewUrl(URL.createObjectURL(file));
                 setResultUrl(null);
                 setError(null);
+                resetErrorTrap();
             }
         }
     };
@@ -45,11 +72,15 @@ export default function DemoPage() {
 
     const handleSubmit = async () => {
         if (!imageFile) {
-            setError('이미지를 먼저 업로드해주세요.');
+            const msg = '이미지를 먼저 업로드해주세요.';
+            setError(msg);
+            reportError(msg);
             return;
         }
         if (!prompt.trim()) {
-            setError('명령어(Prompt)를 입력해주세요.');
+            const msg = '명령어(Prompt)를 입력해주세요.';
+            setError(msg);
+            reportError(msg);
             return;
         }
 
@@ -64,14 +95,22 @@ export default function DemoPage() {
 
         if (response.success && response.resultUrl) {
             setResultUrl(response.resultUrl);
+            resetErrorTrap(); // 성공 시 오류 트래커 리셋
         } else {
-            setError(response.message || '비식별화 처리 중 오류가 발생했습니다.');
+            const errMsg = response.message || '비식별화 처리 중 오류가 발생했습니다.';
+            setError(errMsg);
+            reportError(errMsg);
         }
         setIsLoading(false);
     };
 
     return (
-        <div className="max-w-6xl mx-auto px-6 py-12">
+        <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="max-w-6xl mx-auto px-6 py-12"
+        >
             <div className="text-center mb-12">
                 <h1 className="text-4xl font-bold text-white mb-4">Interactive Demo</h1>
                 <p className="text-gray-400 max-w-2xl mx-auto">
@@ -108,8 +147,8 @@ export default function DemoPage() {
                                         onClick={() => setTarget('inner')}
                                         disabled={isLoading}
                                         className={`flex-1 py-3 rounded-lg text-sm font-semibold transition-all ${target === 'inner'
-                                                ? 'bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]'
-                                                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                                            ? 'bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]'
+                                            : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                                             }`}
                                     >
                                         객체 가리기 (Inner)
@@ -118,8 +157,8 @@ export default function DemoPage() {
                                         onClick={() => setTarget('outer')}
                                         disabled={isLoading}
                                         className={`flex-1 py-3 rounded-lg text-sm font-semibold transition-all ${target === 'outer'
-                                                ? 'bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]'
-                                                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                                            ? 'bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]'
+                                            : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                                             }`}
                                     >
                                         배경 가리기 (Outer)
@@ -127,19 +166,26 @@ export default function DemoPage() {
                                 </div>
                             </div>
 
-                            {error && (
-                                <div className="p-3 bg-red-900/30 border border-red-800 rounded-lg text-red-400 text-sm">
-                                    {error}
-                                </div>
-                            )}
+                            <AnimatePresence>
+                                {error && (
+                                    <motion.div
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: 'auto' }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        className="p-3 bg-red-900/30 border border-red-800 rounded-lg text-red-400 text-sm overflow-hidden"
+                                    >
+                                        {error}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
 
                             <div className="pt-4 border-t border-gray-800">
                                 <button
                                     onClick={handleSubmit}
                                     disabled={isLoading}
                                     className={`w-full py-4 rounded-lg font-bold text-white transition-all ${isLoading
-                                            ? 'bg-blue-600/50 cursor-not-allowed'
-                                            : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-[0_0_20px_rgba(79,70,229,0.4)]'
+                                        ? 'bg-blue-600/50 cursor-not-allowed'
+                                        : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-[0_0_20px_rgba(79,70,229,0.4)]'
                                         }`}
                                 >
                                     {isLoading ? (
@@ -159,68 +205,77 @@ export default function DemoPage() {
 
                 {/* Right Column: Image Preview & Result */}
                 <div className="lg:col-span-2">
-                    {!previewUrl && !resultUrl ? (
-                        // 빈 업로드 공간
-                        <div
-                            className="bg-gray-900/50 border-2 border-gray-800 border-dashed rounded-2xl h-[600px] flex flex-col items-center justify-center text-gray-500 hover:border-blue-500/50 hover:bg-gray-800/80 transition-all cursor-pointer backdrop-blur-sm"
-                            onClick={() => fileInputRef.current?.click()}
-                            onDrop={handleDrop}
-                            onDragOver={handleDragOver}
-                        >
-                            <svg className="w-16 h-16 mb-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                            </svg>
-                            <p className="text-xl font-medium text-gray-300">클릭하거나 이미지를 드래그 앤 드롭 하세요.</p>
-                            <p className="text-sm mt-3 text-gray-500">JPG, PNG 파일 지원 (최대 10MB)</p>
-                        </div>
-                    ) : (
-                        // 이미지 프리뷰 / 결과 표시 영역
-                        <div className="relative bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden h-[600px] shadow-2xl flex items-center justify-center">
+                    <AnimatePresence mode="wait">
+                        {!previewUrl && !resultUrl ? (
+                            // 빈 업로드 공간
+                            <motion.div
+                                key="upload-zone"
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className="bg-gray-900/50 border-2 border-gray-800 border-dashed rounded-2xl h-[600px] flex flex-col items-center justify-center text-gray-500 hover:border-blue-500/50 hover:bg-gray-800/80 transition-all cursor-pointer backdrop-blur-sm"
+                                onClick={() => fileInputRef.current?.click()}
+                                onDrop={handleDrop}
+                                onDragOver={handleDragOver}
+                            >
+                                <svg className="w-16 h-16 mb-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                </svg>
+                                <p className="text-xl font-medium text-gray-300">클릭하거나 이미지를 드래그 앤 드롭 하세요.</p>
+                                <p className="text-sm mt-3 text-gray-500">JPG, PNG 파일 지원 (최대 10MB)</p>
+                            </motion.div>
+                        ) : (
+                            // 이미지 프리뷰 / 결과 표시 영역
+                            <motion.div
+                                key="preview-zone"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className="relative bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden h-[600px] shadow-2xl flex items-center justify-center"
+                            >
+                                <img
+                                    src={resultUrl || previewUrl!}
+                                    alt="Working Image"
+                                    className={`max-w-full max-h-full object-contain ${isLoading ? 'opacity-40 blur-sm' : 'opacity-100'} transition-all duration-500`}
+                                />
 
-                            <img
-                                src={resultUrl || previewUrl!}
-                                alt="Working Image"
-                                className={`max-w-full max-h-full object-contain ${isLoading ? 'opacity-40 blur-sm' : 'opacity-100'} transition-all duration-500`}
-                            />
-
-                            {/* 스캐닝/로딩 오버레이 UI */}
-                            {isLoading && (
-                                <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
-                                    <div className="w-full h-1 bg-blue-500/50 absolute top-0 animate-[scan_2s_ease-in-out_infinite] shadow-[0_0_15px_rgba(59,130,246,0.6)]" />
-                                    <div className="text-blue-400 font-mono text-xl tracking-widest bg-gray-900/80 px-6 py-2 rounded-lg border border-blue-500/30 backdrop-blur-md">
-                                        ANALYZING SUBJECT...
+                                {/* 스캐닝/로딩 오버레이 UI */}
+                                {isLoading && (
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+                                        <div className="w-full h-1 bg-blue-500/50 absolute top-0 animate-[scan_2s_ease-in-out_infinite] shadow-[0_0_15px_rgba(59,130,246,0.6)]" />
+                                        <div className="text-blue-400 font-mono text-xl tracking-widest bg-gray-900/80 px-6 py-2 rounded-lg border border-blue-500/30 backdrop-blur-md">
+                                            ANALYZING SUBJECT...
+                                        </div>
                                     </div>
-                                </div>
-                            )}
-
-                            {/* 액션 버튼들 (우측 상단) */}
-                            <div className="absolute top-4 right-4 flex gap-2">
-                                {resultUrl && (
-                                    <a
-                                        href={resultUrl}
-                                        download="de-identified-result.png"
-                                        className="bg-blue-600 hover:bg-blue-500 text-white p-2 rounded-lg shadow-lg border border-blue-500/50 transition-colors tooltip flex items-center justify-center w-10 h-10"
-                                        title="다운로드"
-                                    >
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                                    </a>
                                 )}
-                                <button
-                                    onClick={() => {
-                                        setPreviewUrl(null);
-                                        setResultUrl(null);
-                                        setImageFile(null);
-                                        if (fileInputRef.current) fileInputRef.current.value = '';
-                                    }}
-                                    className="bg-gray-800 hover:bg-gray-700 text-gray-300 p-2 rounded-lg shadow-lg border border-gray-700 transition-colors w-10 h-10 flex items-center justify-center"
-                                    title="초기화"
-                                >
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                </button>
-                            </div>
 
-                        </div>
-                    )}
+                                {/* 액션 버튼들 (우측 상단) */}
+                                <div className="absolute top-4 right-4 flex gap-2">
+                                    {resultUrl && (
+                                        <a
+                                            href={resultUrl}
+                                            download="de-identified-result.png"
+                                            className="bg-blue-600 hover:bg-blue-500 text-white p-2 rounded-lg shadow-lg border border-blue-500/50 transition-colors tooltip flex items-center justify-center w-10 h-10"
+                                            title="다운로드"
+                                        >
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                        </a>
+                                    )}
+                                    <button
+                                        onClick={() => {
+                                            setPreviewUrl(null);
+                                            setResultUrl(null);
+                                            setImageFile(null);
+                                            if (fileInputRef.current) fileInputRef.current.value = '';
+                                        }}
+                                        className="bg-gray-800 hover:bg-gray-700 text-gray-300 p-2 rounded-lg shadow-lg border border-gray-700 transition-colors w-10 h-10 flex items-center justify-center"
+                                        title="초기화"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                    </button>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
 
                     <input
                         type="file"
@@ -231,6 +286,6 @@ export default function DemoPage() {
                     />
                 </div>
             </div>
-        </div>
+        </motion.div>
     );
 }
