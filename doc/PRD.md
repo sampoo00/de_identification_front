@@ -23,9 +23,9 @@
 - [x] 데모 페이지와 백엔드 API 연결 (폼 상태 관리 및 비동기 업로드 처리, `FormData` 변환 기능 구성).
 - [x] 요청 상태(Job Status) 모니터링 컴포넌트 추가 및 스캐닝 애니메이션 피드백 적용. 응답결과 URL 매핑 및 에러 핸들링.
 
-### [대기] Phase 4: 사용자 API 키 관리 시스템 완성 (Key Management System)
-- 사용자 식별/인증 체계 구성 (Mock 또는 기본 Auth Provider 연동).
-- 생성/삭제 API 파이프라인 연계 및 Local DB 연동.
+### [완료] Phase 4: 사용자 API 키 관리 시스템 완성 (Key Management System)
+- [x] 사용자 식별/인증 체계 구성 (Mock Data Provider 적용 및 Local DB/Storage 연동).
+- [x] 생성/삭제 파이프라인 연동 구현 (새 키 생성, 마스킹된 키 보기 목록 제공, 삭제 시 확인 절차).
 
 ### [대기] Phase 5: 최적화 및 디버그 (Polish & Debug)
 - 파일 업로드 크기 확장 검토 및 사용자 접근성 강화.
