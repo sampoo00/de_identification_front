@@ -1,0 +1,84 @@
+[GEMINI.md 설계]
+- 'LLM기반의 비식별화' 사이트 구성을 위한 사이트로 작업 규칙, 선호사항, 프로젝트 정보등을 정의한다.
+- 200줄 이내로 구성하고, 세부내용 관련해서는 doc 디렉토리 내 ADR.md, ARCHITECTURE.md, PRD.md, UI_GUIDE.md 파일들을 생성하여 개발 관련 내용을 구체적으로 기술한다.
+- Agents 설계, Skills 설계, Hooks 설계에 대한 내용을 반영한다.
+- 개발 Agent기 개발요소들을 phase별 구분하여 개발 진행하고, 디버그 및 검증 Agent가 phase별로 디버그를 진행한다.
+- script를 구성하여 서비스 구동 및 디버그 검증에 사용한다. scripts 디렉토리 내 service_scripts, debug_scripts 디렉토리를 구성하고, service_scripts 안에는 서비스 구동 관련, debug_scripts 안에는 디버그 검증관련 script들을 모아놓는다.
+- 서비스 Backend 관련해서는 reference 디렉토리내 README_backend.md 파일을 참조하여 'LLM기반의 비식별화' 사이트와 연계할 수 있도록 한다. 
+- 환경성정 부분은 .env에 정의한다.
+
+1. 프로젝트 개요 및 핵심 차별성
+### 서비스 정의
+VLM(Vision Language Model), SAM(Segment Anything Model), Transformer 기반 AI 기술을 결합하여
+**사용자가 자연어로 원하는 대상을 지정하면 AI가 자동으로 해당 객체를 정밀 세그먼테이션하고 비식별화**하는 플랫폼.
+
+### 핵심 차별점 — 반드시 UI/기획/마케팅 전반에 반영할 것
+
+### 핵심 사용자 시나리오 (2가지 입력 모드)
+
+입력 이미지(여러개 이미지 입력가능)
+    │
+    ├─ [자연어 지정] 사용자 텍스트 입력
+    │        → VLM(Vision Language Model), SAM(Segment Anything Model), Transformer 기반 AI 기술을 결합 : 텍스트↔이미지 그라운딩
+    │        → 대상 객체 후보 바운딩 박스 추출
+	│        → 추출역역에 대한 비식별화
+    │
+    ├─ [비식별화된 이미지] 다운로드를 통한 사용
+
+
+### 비식별화 처리 방식 참조
+reference 디렉토리내 README_backend.md 파일을 참조 
+
+### 키관리 방식
+키관리시 생성, 삭제, 보기, 다운로드 가능
+
+2. 사이트 구성
+- 사이트 소개
+- 기술설명
+- 데모
+- 사용자키 생성 및 다운로드(관련 기능은 GEMINI, OPENAI 등 관련기능을 제공하는 사이트 참고)	
+
+3. 기술 스택
+### 프론트엔드(추가 확장가능)
+- **프레임워크:** React + Next.js 14 (App Router)
+- **언어:** TypeScript (strict mode, `any` 사용 금지)
+- **스타일:** Tailwind CSS v3
+등등...
+
+4. 기술 개발 요소
+- 기술 개발 요소들은 phase를 구성해서 단계별로 개발한다. 각 기능별 개발 요소를 분석하여 phase 별 구분을 한다.
+
+5. 디버그 및 검증
+- phase별로 개발 완료가 끝나면, phase별 디버그 및 검증을 진행한다. 
+- 디버그시 에러가 발생하면 코드를 수정하며, 계속적을 디버그를 진행한다. 다만 5번이상 오류가 발생하면 hooks를 통해 알림을 처리한다.
+
+6. 금지 사항
+- 환경변수를 코드에 하드코딩하지 않음
+- node_modules를 Git에 커밋하지 않음
+- 비밀번호나 API 키를 소스코드에 포함하지 않음
+
+7. README.md 생성시 요청사항
+- 프로젝트 설명 (3줄 이내)
+- 설치 방법 (npm install부터 실행까지)
+- 사용법 (기본 예제 포함)
+- 환경변수 목록 (.env에 필요한 항목)
+- 기여 가이드 (PR 규칙)
+
+[Agents 설계]
+- .gemini/agents 디렉토리에 구성한다.
+
+1. 개발 Agent
+ - 서비스 개발 전반에 걸처서 개발을 진행한다.
+2. 디버그 및 검증 Agent
+ - 디버그 관련 Script들을 만들어서 검증한다.
+
+[Skills 설계]
+- .gemini/skills 디렉토리에 구성한다.
+- karpathy-guidelines skill(https://github.com/multica-ai/andrej-karpathy-skills.git)을 통해서 검토 및 변경을 한다.
+
+[Hooks 설계]
+- .gemini/settings.json 파일에 구성한다.
+- hooks관련 script를 구성하때는 .gemini/hooks 디렉토리 안에 구성한다.
+- 코드를 작성할때, 파일을 삭제하게 되면 확인하는 부분을 추가한다.
+- 코드 작성후 관련 내용들을 GEMINI.md, README.md, doc 디렉토리 밑에 있는 모든 .md 파일들에 반영해 줄 수 있는 hooks 추가한다.
+
