@@ -3,7 +3,7 @@ export default function TechnologyPage() {
         <div className="max-w-5xl mx-auto px-6 py-16">
             <h1 className="text-4xl font-bold mb-8 text-white">Behind the Intelligence</h1>
             <p className="text-xl text-gray-300 mb-12">
-                GEMINI integrates three core AI components to seamlessly translate human intent into privacy-protected visual data.
+                MasGo integrates three core AI components to seamlessly translate human intent into privacy-protected visual data.
             </p>
 
             <div className="space-y-16">

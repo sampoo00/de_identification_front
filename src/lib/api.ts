@@ -22,7 +22,7 @@ export async function processDeidentify(req: DeidentifyRequest): Promise<Deident
     formData.append('target', req.target);
     formData.append('category', req.category || 'SEGMENTATION');
 
-    const apiKey = req.apiKey || 'default-gemini-key'; // 실제 서비스에서는 localStorage/상태관리에서 가져옴
+    const apiKey = req.apiKey || 'default-masgo-key'; // 실제 서비스에서는 localStorage/상태관리에서 가져옴
 
     try {
         const res = await fetch(`${API_BASE_URL}/deidentify/`, {
