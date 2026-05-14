@@ -18,10 +18,10 @@
 - [x] **데모 페이지 UI (`/demo`)**: 이미지 업로드 폼(드래그앤드롭 디자인), 자연어 프롬프트 입력창, 처리 옵션(Inner/Outer) 선택 패널 UI 프론트엔드 구축. (API 미연결 상태)
 - [x] **API 키 관리 (`/keys`)**: GEMINI 시스템 연동을 위한 보안 키 목록 조회 및 생성 UI 템플릿 완성.
 
-### [대기] Phase 3: 백엔드/AI 연동 (Backend Integration)
-- `/api/v1/deidentify/` 백엔드 API 연동 모듈 로직 구현.
-- 데모 페이지와 백엔드 API 연결 (폼 상태 관리 및 비동기 업로드 처리).
-- 요청 상태(Job Status) 모니터링 컴포넌트 추가 및 결과 이미지 렌더링(Before/After 비교 UI), 에러 핸들링.
+### [완료] Phase 3: 백엔드/AI 연동 (Backend Integration)
+- [x] `/api/v1/deidentify/` 백엔드 API 연동 모듈 로직 구현 (`src/lib/api.ts`).
+- [x] 데모 페이지와 백엔드 API 연결 (폼 상태 관리 및 비동기 업로드 처리, `FormData` 변환 기능 구성).
+- [x] 요청 상태(Job Status) 모니터링 컴포넌트 추가 및 스캐닝 애니메이션 피드백 적용. 응답결과 URL 매핑 및 에러 핸들링.
 
 ### [대기] Phase 4: 사용자 API 키 관리 시스템 완성 (Key Management System)
 - 사용자 식별/인증 체계 구성 (Mock 또는 기본 Auth Provider 연동).
