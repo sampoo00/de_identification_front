@@ -11,10 +11,10 @@ src/
  │    ├── globals.css      # 전역 스타일 및 Tailwind base (Dark Theme)
  │    ├── layout.tsx       # Root Layout (폰트 설정, Navigation & Footer 임베딩)
  │    ├── page.tsx         # 랜딩 페이지 (소개 및 데모 접속 유도)
- │    ├── demo/            # 데모 환경 UI (VLM/SAM3 테스트 베드)
+ │    ├── demo/            # 데모 환경 UI (VLM/Promptable Concept Segmentation 테스트 베드)
  │    ├── keys/            # 백엔드 API 키 관리 UI
- │    └── technology/      # AI 기반 기술(VLM, SAM3) 설명 페이지
- │
+ │    └── technology/      # AI 기반 기술(VLM, Promptable Concept Segmentation) 설명 페이지
+```
  ├── components/           # 재사용 가능한 UI 컴포넌트 블록
  │    ├── layout/
  │    │    ├── Navigation.tsx   # 상단 GNB (로고, 주요 링크, Key 링크)

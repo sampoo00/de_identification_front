@@ -19,7 +19,7 @@ export default function KeysPage() {
 
     // 로컬 스토리지에서 초기 키 값들 불러오기
     useEffect(() => {
-        const stored = localStorage.getItem('gemini_api_keys');
+        const stored = localStorage.getItem('masgo_api_keys');
         if (stored) {
             setKeys(JSON.parse(stored));
         } else {
@@ -31,13 +31,13 @@ export default function KeysPage() {
                 createdAt: new Date().toLocaleDateString(),
             };
             setKeys([defaultKey]);
-            localStorage.setItem('gemini_api_keys', JSON.stringify([defaultKey]));
+            localStorage.setItem('masgo_api_keys', JSON.stringify([defaultKey]));
         }
     }, []);
 
     const generateMockSecret = () => {
         const randomStr = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-        return `gemini-${randomStr}`;
+        return `masgo-${randomStr}`;
     };
 
     const handleCreateKey = () => {
@@ -53,7 +53,7 @@ export default function KeysPage() {
 
         const updatedKeys = [newKey, ...keys];
         setKeys(updatedKeys);
-        localStorage.setItem('gemini_api_keys', JSON.stringify(updatedKeys));
+        localStorage.setItem('masgo_api_keys', JSON.stringify(updatedKeys));
 
         // 새로 생성된 키 일회성 노출
         setNewlyCreatedSecret(secret);
@@ -65,7 +65,7 @@ export default function KeysPage() {
         if (confirm('정말로 이 API 키를 삭제(Revoke) 하시겠습니까? 복구할 수 없습니다.')) {
             const updatedKeys = keys.filter(k => k.id !== id);
             setKeys(updatedKeys);
-            localStorage.setItem('gemini_api_keys', JSON.stringify(updatedKeys));
+            localStorage.setItem('masgo_api_keys', JSON.stringify(updatedKeys));
 
             // 방금 생성한 키를 삭제한 경우라면 모달창 상태도 리셋
             if (newlyCreatedSecret && keys.find(k => k.id === id)?.secret === newlyCreatedSecret) {
@@ -75,7 +75,7 @@ export default function KeysPage() {
     };
 
     const maskSecret = (secret: string) => {
-        const prefix = secret.substring(0, 10); // "gemini-xxx"
+        const prefix = secret.substring(0, 10); // "masgo-xxx"
         const suffix = secret.substring(secret.length - 4);
         return `${prefix}${'*'.repeat(16)}${suffix}`;
     };
@@ -89,7 +89,7 @@ export default function KeysPage() {
         >
             <div className="mb-10">
                 <h1 className="text-3xl font-bold text-white mb-2">API Keys</h1>
-                <p className="text-gray-400">Manage your secret keys for accessing GEMINI via API.</p>
+                <p className="text-gray-400">Manage your secret keys for accessing MasGO via API.</p>
             </div>
 
             <AnimatePresence>

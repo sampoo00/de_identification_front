@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'MasGO - Intelligent De-identification',
-  description: 'AI-powered privacy protection platform using VLM & SAM3',
+  description: 'AI-powered privacy protection platform using VLM & Promptable Concept Segmentation',
 };
 
 export default function RootLayout({

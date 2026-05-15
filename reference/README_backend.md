@@ -13,7 +13,7 @@
 
 ### 🔍 Multi-Algorithm Detection Engines
 - **VLM (Vision-Language Model)**: Deep understanding of natural language prompts using **Qwen3-VL-8B-Thinking**.
-- **Segmentation**: Pixel-perfect precision with **SAM3 (Segment Anything Model 3)**.
+- **Segmentation**: Pixel-perfect precision with **Promptable Concept Segmentation**.
 - **Object Detection**: High-speed real-time processing with **RT-DETR V2**.
 
 ### 🧠 Intelligent Analysis (Auto-Decision)
@@ -49,7 +49,7 @@ graph TD
     
     subgraph "Detection Engines"
         WAS --> VLM[VLM: Qwen3-VL]
-        WAS --> SEG[SEG: SAM3]
+        WAS --> SEG[SEG: Promptable Concept Segmentation]
         WAS --> DET[DET: RT-DETR V2]
     end
     
@@ -68,7 +68,7 @@ graph TD
 
 ### 1. Prerequisites
 - Python 3.10 or higher
-- CUDA-enabled GPU (Highly recommended for VLM/SAM3)
+- CUDA-enabled GPU (Highly recommended for VLM and Promptable Concept Segmentation)
 - [Ollama](https://ollama.ai/) (Optional, for local LLM support)
 
 ### 2. Clone and Install
@@ -162,3 +162,4 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ---
 *For detailed technical specifications and expansion guides, please refer to [GEMINI.md](./GEMINI.md).*
+ specifications and expansion guides, please refer to [GEMINI.md](./GEMINI.md).*

@@ -1,7 +1,9 @@
 # Product Requirements Document (PRD) & Phase Plan
 
 ## 제품 개요 (Product Overview)
-자연어 명령과 VLM/SAM3 AI 모델을 결합하여 자동으로 이미지 속 개인정보 및 민감 데이터를 추출하고 가려주는 'LLM 기반 지능형 비식별화 시스템(MasGO)'의 프론트엔드입니다. 
+자연어 명령과 VLM 및 **Promptable Concept Segmentation** AI 모델을 결합하여 자동으로 이미지 속 개인정보 및 민감 데이터를 추출하고 가려주는 'LLM 기반 지능형 비식별화 시스템(MasGO)'의 프론트엔드입니다.  
+
+특히 **Promptable Concept Segmentation** 기술을 활용하여, 단순한 특정 객체 지정을 넘어 텍스트나 시각적 예시(Exemplar)를 통해 이미지 내의 모든 관련 개념(Concept)을 일괄적으로 식별하고 정밀 세그먼테이션을 수행합니다.
 
 ---
 
@@ -13,8 +15,8 @@
 - [x] **공통 컴포넌트 개발**: Global Navigation (`Navigation.tsx`) 및 Footer 적용.
 
 ### [완료] Phase 2: 핵심 페이지 UI 개발 (Core Pages UI)
-- [x] **사이트 소개 페이지 (`/`)**: 서비스의 정의 및 핵심 차별점(텍스트↔이미지 그라운딩 기반 객체 추론) 시각화.
-- [x] **기술 설명 페이지 (`/technology`)**: VLM, SAM3, Transformer 기반 아키텍처 및 처리 흐름 다이아그램/설명 레이아웃 구성.
+- [x] **사이트 소개 페이지 (`/`)**: 서비스의 정의 및 핵심 차별점(텍스트↔이미지 그라운딩 기반 객체 추론 및 컨셉 세그먼테이션) 시각화.
+- [x] **기술 설명 페이지 (`/technology`)**: VLM, Promptable Concept Segmentation, Transformer 기반 아키텍처 및 처리 흐름 다이아그램/설명 레이아웃 구성.
 - [x] **데모 페이지 UI (`/demo`)**: 이미지 업로드 폼(드래그앤드롭 디자인), 자연어 프롬프트 입력창, 처리 옵션(Inner/Outer) 선택 패널 UI 프론트엔드 구축. (API 미연결 상태)
 - [x] **API 키 관리 (`/keys`)**: MasGO 시스템 연동을 위한 보안 키 목록 조회 및 생성 UI 템플릿 완성.
 

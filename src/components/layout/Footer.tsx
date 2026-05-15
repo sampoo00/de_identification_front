@@ -6,7 +6,7 @@ export default function Footer() {
                     &copy; {new Date().getFullYear()} MasGO Intelligent De-identification. All rights reserved.
                 </p>
                 <p className="text-gray-600 text-xs mt-2">
-                    Powered by VLM, SAM3, and Transformer AI Technologies
+                    Powered by VLM, Promptable Concept Segmentation, and Transformer AI Technologies
                 </p>
             </div>
         </footer>

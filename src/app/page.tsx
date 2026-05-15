@@ -41,7 +41,7 @@ export default function Home() {
             variants={itemVariants}
             className="mt-6 text-lg leading-8 text-gray-300"
           >
-            Harness the power of VLM and SAM3 to protect privacy. Simply describe what you want to hide, and our AI automatically detects and anonymizes the target object with precision.
+            Harness the power of VLM and Promptable Concept Segmentation to protect privacy. Simply describe what you want to hide, and our AI automatically detects and anonymizes the target object with precision.
           </motion.p>
           <motion.div variants={itemVariants} className="mt-10 flex items-center justify-center gap-x-6">
             <Link
@@ -74,9 +74,9 @@ export default function Home() {
               </dd>
             </div>
             <div className="flex flex-col items-center text-center p-6 bg-gray-900/50 rounded-2xl border border-gray-800 backdrop-blur-sm hover:bg-gray-800/40 transition-colors">
-              <dt className="text-xl font-semibold leading-7 text-white mt-4">SAM3 Precision</dt>
+              <dt className="text-xl font-semibold leading-7 text-white mt-4">Promptable Concept Segmentation</dt>
               <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-gray-400">
-                <p>Segment Anything 3 handles the bounding boxes to generate pixel-perfect masks around complex objects automatically.</p>
+                <p>Promptable Concept Segmentation handles everything from text phrases to visual examples, identifying and masking all related instances automatically.</p>
               </dd>
             </div>
             <div className="flex flex-col items-center text-center p-6 bg-gray-900/50 rounded-2xl border border-gray-800 backdrop-blur-sm hover:bg-gray-800/40 transition-colors">

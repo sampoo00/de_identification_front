@@ -15,7 +15,7 @@
   - Tailwind 컴파일러를 통해 빌드 크기를 최소화하면서 글로벌 Dark Theme 및 Glassmorphism UI 구현이 용이해졌습니다.
 
 ## ADR-002: 보안 및 인증 체계 (API Key)
-- **배경**: VLM/SAM3 기반 백엔드 API 시스템 접근 제어 및 사용자별 사용량 모니터링이 필요합니다.
+- **배경**: VLM 및 Promptable Concept Segmentation 기반 백엔드 API 시스템 접근 제어 및 사용자별 사용량 모니터링이 필요합니다.
 - **결정 사항**:
   - 별도의 세션보다 **API Token(Secret Key)** 기반의 인증 체계를 채택합니다.
   - 프론트엔드 내 `/keys` 라우트를 통해 API Key 발급 및 관리 UI를 제공하여 사용자가 외부 애플리케이션 및 스크립트에서도 모델 환경을 사용할 수 있도록 보장합니다.
