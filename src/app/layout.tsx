@@ -7,7 +7,7 @@ import Footer from '@/components/layout/Footer';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'MasGo - Intelligent De-identification',
+  title: 'MasGO - Intelligent De-identification',
   description: 'AI-powered privacy protection platform using VLM & SAM3',
 };
 
