@@ -1,4 +1,4 @@
-# GEMINI.md - LLM 기반 비식별화 사이트 구성 및 규칙
+GEMINI.md - LLM 기반 비식별화 사이트 구성 및 규칙
 
 ## 1. 프로젝트 개요 및 핵심 차별성
 - **서비스 정의**: VLM(Vision Language Model), SAM(Segment Anything Model), Transformer 기반 AI 기술을 결합. 사용자가 자연어로 원하는 대상을 지정하면 AI가 객체를 정밀 자동 세그먼테이션하고 비식별화하는 플랫폼.

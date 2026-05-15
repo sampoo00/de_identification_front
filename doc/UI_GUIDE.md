@@ -1,6 +1,6 @@
 # UI/UX Guide
 
-본 문서는 GEMINI 비식별화 시스템의 사용자 인터페이스 및 경험적 요소(Aesthetics)에 대한 명세서입니다.
+본 문서는 MasGO 비식별화 시스템의 사용자 인터페이스 및 경험적 요소(Aesthetics)에 대한 명세서입니다.
 
 ## 1. 디자인 원칙 (Rich Aesthetics)
 본 애플리케이션은 사용자로 하여금 "Premium 및 State of the Art" 이미지를 각인시킬 수 있도록 최신 모던 웹 트렌드를 준수합니다.
