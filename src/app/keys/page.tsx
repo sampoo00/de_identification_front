@@ -2,83 +2,115 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '@/lib/supabase';
+import { useRouter } from 'next/navigation';
 
-// API Key 타입 정의
+// API Key 타입 정의 (Supabase DB 구조에 맞춤)
 interface ApiKey {
     id: string;
     name: string;
-    secret: string;
-    createdAt: string;
+    secret_key: string;
+    created_at: string;
 }
 
 export default function KeysPage() {
     const [keys, setKeys] = useState<ApiKey[]>([]);
+    const [user, setUser] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [newKeyName, setNewKeyName] = useState('My Test Key');
+    const [newKeyName, setNewKeyName] = useState('My MasGO Key');
     const [newlyCreatedSecret, setNewlyCreatedSecret] = useState<string | null>(null);
+    const router = useRouter();
 
-    // 로컬 스토리지에서 초기 키 값들 불러오기
     useEffect(() => {
-        const stored = localStorage.getItem('masgo_api_keys');
-        if (stored) {
-            setKeys(JSON.parse(stored));
-        } else {
-            // 기본 Mock 데이터 하나 생성해두기
-            const defaultKey: ApiKey = {
-                id: '1',
-                name: 'Default Project Key',
-                secret: generateMockSecret(),
-                createdAt: new Date().toLocaleDateString(),
-            };
-            setKeys([defaultKey]);
-            localStorage.setItem('masgo_api_keys', JSON.stringify([defaultKey]));
-        }
-    }, []);
-
-    const generateMockSecret = () => {
-        const randomStr = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-        return `masgo-${randomStr}`;
-    };
-
-    const handleCreateKey = () => {
-        if (!newKeyName.trim()) return;
-
-        const secret = generateMockSecret();
-        const newKey: ApiKey = {
-            id: Date.now().toString(),
-            name: newKeyName,
-            secret,
-            createdAt: new Date().toLocaleDateString(),
+        const checkUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                router.push('/auth/login');
+            } else {
+                setUser(user);
+                fetchKeys(user.id);
+            }
         };
+        checkUser();
+    }, [router]);
 
-        const updatedKeys = [newKey, ...keys];
-        setKeys(updatedKeys);
-        localStorage.setItem('masgo_api_keys', JSON.stringify(updatedKeys));
+    const fetchKeys = async (userId: string) => {
+        const { data, error } = await supabase
+            .from('api_keys')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
 
-        // 새로 생성된 키 일회성 노출
-        setNewlyCreatedSecret(secret);
-        setIsModalOpen(false);
-        setNewKeyName('My Test Key');
+        if (error) {
+            console.error('Error fetching keys:', error);
+        } else {
+            setKeys(data || []);
+        }
+        setIsLoading(false);
     };
 
-    const handleRevokeKey = (id: string) => {
-        if (confirm('정말로 이 API 키를 삭제(Revoke) 하시겠습니까? 복구할 수 없습니다.')) {
-            const updatedKeys = keys.filter(k => k.id !== id);
-            setKeys(updatedKeys);
-            localStorage.setItem('masgo_api_keys', JSON.stringify(updatedKeys));
+    const generateSecret = () => {
+        const randomStr = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        return `sk-mg-${randomStr}`;
+    };
 
-            // 방금 생성한 키를 삭제한 경우라면 모달창 상태도 리셋
-            if (newlyCreatedSecret && keys.find(k => k.id === id)?.secret === newlyCreatedSecret) {
-                setNewlyCreatedSecret(null);
+    const handleCreateKey = async () => {
+        if (!newKeyName.trim() || !user) return;
+
+        const secret = generateSecret();
+        const { data, error } = await supabase
+            .from('api_keys')
+            .insert([
+                { 
+                    user_id: user.id, 
+                    name: newKeyName, 
+                    secret_key: secret 
+                }
+            ])
+            .select();
+
+        if (error) {
+            alert('키 생성 중 오류가 발생했습니다: ' + error.message);
+        } else {
+            setKeys([data[0], ...keys]);
+            setNewlyCreatedSecret(secret);
+            setIsModalOpen(false);
+            setNewKeyName('My MasGO Key');
+        }
+    };
+
+    const handleRevokeKey = async (id: string) => {
+        if (confirm('정말로 이 API 키를 삭제(Revoke) 하시겠습니까? 복구할 수 없습니다.')) {
+            const { error } = await supabase
+                .from('api_keys')
+                .delete()
+                .eq('id', id);
+
+            if (error) {
+                alert('키 삭제 중 오류가 발생했습니다: ' + error.message);
+            } else {
+                setKeys(keys.filter(k => k.id !== id));
+                if (newlyCreatedSecret && keys.find(k => k.id === id)?.secret_key === newlyCreatedSecret) {
+                    setNewlyCreatedSecret(null);
+                }
             }
         }
     };
 
     const maskSecret = (secret: string) => {
-        const prefix = secret.substring(0, 10); // "masgo-xxx"
+        const prefix = secret.substring(0, 10);
         const suffix = secret.substring(secret.length - 4);
         return `${prefix}${'*'.repeat(16)}${suffix}`;
     };
+
+    if (isLoading) {
+        return (
+            <div className="min-h-[60vh] flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+        );
+    }
 
     return (
         <motion.div
@@ -87,9 +119,15 @@ export default function KeysPage() {
             transition={{ duration: 0.5 }}
             className="max-w-4xl mx-auto px-6 py-12"
         >
-            <div className="mb-10">
-                <h1 className="text-3xl font-bold text-white mb-2">API Keys</h1>
-                <p className="text-gray-400">Manage your secret keys for accessing MasGO via API.</p>
+            <div className="mb-10 flex justify-between items-end">
+                <div>
+                    <h1 className="text-3xl font-bold text-white mb-2">API Keys</h1>
+                    <p className="text-gray-400">Manage your secret keys for accessing MasGO via API.</p>
+                </div>
+                <div className="text-right">
+                    <p className="text-xs text-gray-500 mb-1">Logged in as</p>
+                    <p className="text-sm text-blue-400 font-medium">{user?.email}</p>
+                </div>
             </div>
 
             <AnimatePresence>
@@ -166,8 +204,8 @@ export default function KeysPage() {
                                             className="hover:bg-gray-800/30 transition-colors group"
                                         >
                                             <td className="px-4 py-5 text-gray-200 font-medium">{key.name}</td>
-                                            <td className="px-4 py-5 font-mono text-gray-500">{maskSecret(key.secret)}</td>
-                                            <td className="px-4 py-5 text-gray-500">{key.createdAt}</td>
+                                            <td className="px-4 py-5 font-mono text-gray-500">{maskSecret(key.secret_key)}</td>
+                                            <td className="px-4 py-5 text-gray-500">{new Date(key.created_at).toLocaleDateString()}</td>
                                             <td className="px-4 py-5 text-right">
                                                 <button
                                                     onClick={() => handleRevokeKey(key.id)}
@@ -192,7 +230,7 @@ export default function KeysPage() {
                 </div>
             </div>
 
-            {/* 키 생성 모달 (Mock Auth) */}
+            {/* 키 생성 모달 */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                     <div className="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-md shadow-2xl p-6">

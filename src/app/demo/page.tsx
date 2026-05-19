@@ -1,11 +1,20 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { processDeidentify } from '@/lib/api';
 import { useDebugErrorTrap } from '@/hooks/useErrorTrap';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '@/lib/supabase';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function DemoPage() {
+    const [user, setUser] = useState<any>(null);
+    const [isAuthLoading, setIsAuthLoading] = useState(true);
+    const [apiKeys, setApiKeys] = useState<any[]>([]);
+    const [selectedApiKey, setSelectedApiKey] = useState<string>('');
+    const router = useRouter();
+
     const [prompt, setPrompt] = useState('');
     const [category, setCategory] = useState<'VLM' | 'SEGMENTATION' | 'DETECTION'>('VLM');
     const [shape, setShape] = useState<'bbox' | 'circle' | 'ellipse'>('bbox');
@@ -25,6 +34,34 @@ export default function DemoPage() {
     const { reportError, resetErrorTrap } = useDebugErrorTrap(5);
     const MAX_FILE_SIZE_MB = 10;
 
+    // 인증 및 키 정보 확인
+    useEffect(() => {
+        const checkUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                router.push('/auth/login?returnTo=/demo');
+            } else {
+                setUser(user);
+                fetchApiKeys(user.id);
+                setIsAuthLoading(false);
+            }
+        };
+        checkUser();
+    }, [router]);
+
+    const fetchApiKeys = async (userId: string) => {
+        const { data, error } = await supabase
+            .from('api_keys')
+            .select('*')
+            .eq('user_id', userId)
+            .eq('is_active', true);
+
+        if (!error && data && data.length > 0) {
+            setApiKeys(data);
+            setSelectedApiKey(data[0].secret_key); // 첫 번째 키를 기본값으로 설정
+        }
+    };
+
     const validateFile = (file: File): boolean => {
         if (!file.type.startsWith('image/')) {
             const msg = '이미지 파일(JPG, PNG)만 업로드 가능합니다.';
@@ -41,6 +78,14 @@ export default function DemoPage() {
         }
         return true;
     };
+
+    if (isAuthLoading) {
+        return (
+            <div className="min-h-[60vh] flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+        );
+    }
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
@@ -96,7 +141,8 @@ export default function DemoPage() {
             target,
             category,
             shape,
-            level
+            level,
+            apiKey: selectedApiKey || undefined // 선택된 키 전달
         });
 
         if (response.success && response.resultUrl) {
@@ -133,9 +179,36 @@ export default function DemoPage() {
                             Command Interface
                         </h3>
 
-                        <div className="space-y-4 flex-grow overflow-y-auto pr-1 no-scrollbar">
-                            <div>
-                                <label className="block text-xs font-medium text-gray-400 mb-1.5">Refining Prompt</label>
+                            <div className="space-y-4 flex-grow overflow-y-auto pr-1 no-scrollbar">
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-400 mb-1.5">API Key</label>
+                                    {apiKeys.length > 0 ? (
+                                        <div className="relative">
+                                            <select
+                                                value={selectedApiKey}
+                                                onChange={(e) => setSelectedApiKey(e.target.value)}
+                                                disabled={isLoading}
+                                                className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2.5 text-[11px] text-white focus:outline-none focus:border-blue-500 transition-all font-medium appearance-none cursor-pointer"
+                                            >
+                                                {apiKeys.map((key) => (
+                                                    <option key={key.id} value={key.secret_key}>
+                                                        {key.name} ({key.secret_key.substring(0, 10)}...)
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-500">
+                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="text-[10px] text-amber-500 bg-amber-900/20 p-2 rounded-lg border border-amber-800/50">
+                                            생성된 키가 없습니다. <Link href="/keys" className="underline font-bold">Keys 페이지</Link>에서 생성해 주세요.
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-400 mb-1.5">Refining Prompt</label>
                                 <input
                                     type="text"
                                     value={prompt}

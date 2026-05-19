@@ -17,6 +17,13 @@ export interface DeidentifyResponse {
     metadata?: any;
 }
 
+/**
+ * API 키 형식이 올바른지 확인합니다 (sk-mg- 접두어 확인)
+ */
+export const isValidApiKey = (key: string) => {
+    return key.startsWith('sk-mg-');
+};
+
 export async function processDeidentify(req: DeidentifyRequest): Promise<DeidentifyResponse> {
     const formData = new FormData();
     formData.append('image', req.image);
@@ -30,6 +37,14 @@ export async function processDeidentify(req: DeidentifyRequest): Promise<Deident
     }
 
     const apiKey = req.apiKey || 'default-masgo-key';
+
+    // API 키 유효성 검사 (기본 키 제외)
+    if (apiKey !== 'default-masgo-key' && !isValidApiKey(apiKey)) {
+        return { 
+            success: false, 
+            message: '유효하지 않은 API 키 형식입니다. (sk-mg- 접두어 필요)' 
+        };
+    }
 
     try {
         // 1. Enqueue the job (Default Async)
