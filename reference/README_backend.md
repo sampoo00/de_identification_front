@@ -23,7 +23,7 @@
 
 ### 🎭 Flexible De-identification Options
 - **Targeting**: Choose between `inner` (hide the object) or `outer` (hide everything *except* the object).
-- **Shapes**: Supports `bbox` (rectangles), `circle`, `ellipse`, and `polygon` (for segmentation).
+- **Shapes**: Supports `bbox` (rectangles), `circle`, and `ellipse`.
 - **Methods**: High-quality **Gaussian Blur**, **Pixelation (Subsampling)**, or a combination of both.
 
 ### ⚡ Production-Ready Infrastructure

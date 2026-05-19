@@ -7,6 +7,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export default function DemoPage() {
     const [prompt, setPrompt] = useState('');
+    const [category, setCategory] = useState<'VLM' | 'SEGMENTATION' | 'DETECTION'>('VLM');
+    const [shape, setShape] = useState<'bbox' | 'circle' | 'ellipse'>('bbox');
+    const [level, setLevel] = useState<number | null>(null); // null is Auto
     const [target, setTarget] = useState<'inner' | 'outer'>('inner');
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -90,7 +93,10 @@ export default function DemoPage() {
         const response = await processDeidentify({
             image: imageFile,
             prompt,
-            target
+            target,
+            category,
+            shape,
+            level
         });
 
         if (response.success && response.resultUrl) {
@@ -120,49 +126,111 @@ export default function DemoPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Left Column: Input Controls */}
-                <div className="lg:col-span-1 space-y-6">
-                    <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-xl">
+                <div className="lg:col-span-1">
+                    <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-xl h-[600px] flex flex-col">
                         <h3 className="text-lg font-medium text-white mb-6 flex items-center">
                             <span className="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center mr-3 text-sm">AI</span>
                             Command Interface
                         </h3>
 
-                        <div className="space-y-5">
+                        <div className="space-y-4 flex-grow overflow-y-auto pr-1 no-scrollbar">
                             <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-2">Refining Prompt</label>
+                                <label className="block text-xs font-medium text-gray-400 mb-1.5">Refining Prompt</label>
                                 <input
                                     type="text"
                                     value={prompt}
                                     onChange={(e) => setPrompt(e.target.value)}
                                     placeholder="e.g. '사람 얼굴 가려줘'"
-                                    className="w-full bg-gray-950 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-medium placeholder-gray-600"
+                                    className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-medium placeholder-gray-700"
                                     disabled={isLoading}
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-2">Target Mode</label>
-                                <div className="flex gap-4">
+                                <label className="block text-xs font-medium text-gray-400 mb-1.5">Detection Engine</label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {(['VLM', 'SEGMENTATION', 'DETECTION'] as const).map((cat) => (
+                                        <button
+                                            key={cat}
+                                            onClick={() => setCategory(cat)}
+                                            disabled={isLoading}
+                                            className={`py-2 rounded-lg text-[9px] font-bold transition-all border ${category === cat
+                                                ? 'bg-blue-600 text-white shadow-[0_0_10px_rgba(37,99,235,0.4)] border-blue-400'
+                                                : 'bg-gray-800 text-gray-400 hover:bg-gray-700 border-gray-700'
+                                                }`}
+                                        >
+                                            {cat}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-medium text-gray-400 mb-1.5">Target Mode</label>
+                                <div className="flex gap-2">
                                     <button
                                         onClick={() => setTarget('inner')}
                                         disabled={isLoading}
-                                        className={`flex-1 py-3 rounded-lg text-sm font-semibold transition-all ${target === 'inner'
-                                            ? 'bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]'
-                                            : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                                        className={`flex-1 py-2 rounded-lg text-[10px] font-bold transition-all border ${target === 'inner'
+                                            ? 'bg-blue-600 text-white border-blue-400 shadow-[0_0_10px_rgba(37,99,235,0.4)]'
+                                            : 'bg-gray-800 text-gray-400 hover:bg-gray-700 border-gray-700'
                                             }`}
                                     >
-                                        객체 가리기 (Inner)
+                                        INNER
                                     </button>
                                     <button
                                         onClick={() => setTarget('outer')}
                                         disabled={isLoading}
-                                        className={`flex-1 py-3 rounded-lg text-sm font-semibold transition-all ${target === 'outer'
-                                            ? 'bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]'
-                                            : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                                        className={`flex-1 py-2 rounded-lg text-[10px] font-bold transition-all border ${target === 'outer'
+                                            ? 'bg-blue-600 text-white border-blue-400 shadow-[0_0_10px_rgba(37,99,235,0.4)]'
+                                            : 'bg-gray-800 text-gray-400 hover:bg-gray-700 border-gray-700'
                                             }`}
                                     >
-                                        배경 가리기 (Outer)
+                                        OUTER
                                     </button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-medium text-gray-400 mb-1.5">De-id Shape</label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {(['bbox', 'circle', 'ellipse'] as const).map((s) => (
+                                        <button
+                                            key={s}
+                                            onClick={() => setShape(s)}
+                                            disabled={isLoading}
+                                            className={`py-2 rounded-lg text-[9px] font-bold transition-all border ${shape === s
+                                                ? 'bg-blue-600 text-white shadow-[0_0_10px_rgba(37,99,235,0.4)] border-blue-400'
+                                                : 'bg-gray-800 text-gray-400 hover:bg-gray-700 border-gray-700'
+                                                }`}
+                                        >
+                                            {s.toUpperCase()}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div>
+                                <div className="flex justify-between items-center mb-1.5">
+                                    <label className="block text-xs font-medium text-gray-400">Intensity</label>
+                                    <span className="text-[10px] font-bold text-blue-400">
+                                        {level === null ? 'AUTO' : `L${level}`}
+                                    </span>
+                                </div>
+                                <div className="px-1">
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="10"
+                                        step="1"
+                                        value={level === null ? 0 : level}
+                                        onChange={(e) => {
+                                            const val = parseInt(e.target.value);
+                                            setLevel(val === 0 ? null : val);
+                                        }}
+                                        disabled={isLoading}
+                                        className="w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                                    />
                                 </div>
                             </div>
 
@@ -178,27 +246,27 @@ export default function DemoPage() {
                                     </motion.div>
                                 )}
                             </AnimatePresence>
+                        </div>
 
-                            <div className="pt-4 border-t border-gray-800">
-                                <button
-                                    onClick={handleSubmit}
-                                    disabled={isLoading}
-                                    className={`w-full py-4 rounded-lg font-bold text-white transition-all ${isLoading
-                                        ? 'bg-blue-600/50 cursor-not-allowed'
-                                        : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-[0_0_20px_rgba(79,70,229,0.4)]'
-                                        }`}
-                                >
-                                    {isLoading ? (
-                                        <span className="flex items-center justify-center gap-2">
-                                            <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24" fill="none">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                            </svg>
-                                            AI Processing...
-                                        </span>
-                                    ) : 'De-identify Image'}
-                                </button>
-                            </div>
+                        <div className="pt-6 border-t border-gray-800 mt-auto">
+                            <button
+                                onClick={handleSubmit}
+                                disabled={isLoading}
+                                className={`w-full py-4 rounded-lg font-bold text-white transition-all ${isLoading
+                                    ? 'bg-blue-600/50 cursor-not-allowed'
+                                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-[0_0_20px_rgba(79,70,229,0.4)]'
+                                    }`}
+                            >
+                                {isLoading ? (
+                                    <span className="flex items-center justify-center gap-2">
+                                        <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24" fill="none">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        AI Processing...
+                                    </span>
+                                ) : 'De-identify Image'}
+                            </button>
                         </div>
                     </div>
                 </div>

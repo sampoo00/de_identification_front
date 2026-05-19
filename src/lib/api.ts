@@ -5,6 +5,8 @@ export interface DeidentifyRequest {
     prompt: string;
     target: 'inner' | 'outer';
     category?: string;
+    shape?: 'bbox' | 'circle' | 'ellipse';
+    level?: number | null; // number for 1-10, null for Auto
     apiKey?: string;
 }
 
@@ -20,34 +22,71 @@ export async function processDeidentify(req: DeidentifyRequest): Promise<Deident
     formData.append('image', req.image);
     formData.append('prompt', req.prompt);
     formData.append('target', req.target);
-    formData.append('category', req.category || 'SEGMENTATION');
+    formData.append('category', req.category || 'VLM');
+    formData.append('shape', req.shape || 'bbox');
+    
+    if (req.level !== undefined) {
+        formData.append('level', req.level === null ? 'None' : req.level.toString());
+    }
 
-    const apiKey = req.apiKey || 'default-masgo-key'; // 실제 서비스에서는 localStorage/상태관리에서 가져옴
+    const apiKey = req.apiKey || 'default-masgo-key';
 
     try {
-        const res = await fetch(`${API_BASE_URL}/deidentify/`, {
+        // 1. Enqueue the job (Default Async)
+        const enqueueRes = await fetch(`${API_BASE_URL}/deidentify/enqueue`, {
             method: 'POST',
             headers: {
                 'X-API-Key': apiKey,
-                // FormData 사용시 Content-Type은 브라우저가 자동 설정함
             },
             body: formData,
         });
 
-        if (!res.ok) {
-            const errorText = await res.text();
-            return { success: false, message: `API Error: ${res.status} - ${errorText}` };
+        if (!enqueueRes.ok) {
+            const errorText = await enqueueRes.text();
+            return { success: false, message: `Enqueue Error: ${enqueueRes.status} - ${errorText}` };
         }
 
-        // 서버 응답이 URL 문자열 혹은 JSON 정보 (Result: Image URL + Metadata 형식)
-        const json = await res.json();
+        const enqueueData = await enqueueRes.json();
+        const jobId = enqueueData.job_id;
 
-        // 백엔드 아키텍처에 맞춰 변경 가능 (여기서는 일반적인 json { result_url: '...' } 모델 가정)
-        return {
-            success: true,
-            resultUrl: json.result_url || json.url || json.image_url,
-            metadata: json.metadata || json,
-        };
+        if (!jobId) {
+            return { success: false, message: 'Job ID not received from server.' };
+        }
+
+        // 2. Poll for status
+        let attempts = 0;
+        const maxAttempts = 30; // 60 seconds max if 2s interval
+        const pollInterval = 2000; // 2 seconds
+
+        while (attempts < maxAttempts) {
+            const statusRes = await fetch(`${API_BASE_URL}/deidentify/status/${jobId}`, {
+                headers: { 'X-API-Key': apiKey }
+            });
+
+            if (statusRes.ok) {
+                const statusData = await statusRes.json();
+                
+                if (statusData.status === 'completed') {
+                    return {
+                        success: true,
+                        resultUrl: statusData.result_url || statusData.url,
+                        metadata: statusData.metadata || statusData,
+                    };
+                } else if (statusData.status === 'failed') {
+                    return {
+                        success: false,
+                        message: statusData.message || 'Job processing failed on server.',
+                    };
+                }
+                // Continue polling if 'pending' or 'processing'
+            }
+
+            attempts++;
+            await new Promise(resolve => setTimeout(resolve, pollInterval));
+        }
+
+        return { success: false, message: 'Processing timeout. Please check your network or try again later.' };
+
     } catch (error: any) {
         return {
             success: false,

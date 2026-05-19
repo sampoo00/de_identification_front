@@ -33,7 +33,6 @@ src/
 ### 연동 인터페이스 구성
 - **Configuration (.env)**:
   - `NEXT_PUBLIC_API_BASE_URL`: WAS FastAPI 엔드포인트 연동 (`/api/v1/deidentify`)
-  - `NEXT_PUBLIC_LLM_PROVIDER`: Auto Level 측정용 LLM 모델 타겟 설정
 - **통신 로직 (Phase 3 진행 예정)**:
   - 데모 페이지 내부에서 `fetch`/`axios` 기반의 Async/Await 모듈을 통해 Base64 이미지 또는 Multi-part 폼 변환 데이터를 전송.
   - Job Queueing 시스템을 고려하여 Status Poll 방식의 응답 추적기 레이어 설계.

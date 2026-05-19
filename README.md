@@ -22,8 +22,6 @@ npm run dev
 로컬 환경 구성을 위해 `.env` 파일에 다음 항목들을 설정해야 합니다:
 ```env
 NEXT_PUBLIC_API_BASE_URL=
-NEXT_PUBLIC_LLM_PROVIDER=
-NEXT_PUBLIC_OLLAMA_BASE_URL=
 ```
 
 ## 기여 가이드
