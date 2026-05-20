@@ -25,6 +25,7 @@ export default function DemoPage() {
 
     // 상태: 처리중, 결과, 에러
     const [isLoading, setIsLoading] = useState(false);
+    const [jobStatus, setJobStatus] = useState<string | null>(null);
     const [resultUrl, setResultUrl] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
@@ -79,23 +80,15 @@ export default function DemoPage() {
         return true;
     };
 
-    if (isAuthLoading) {
-        return (
-            <div className="min-h-[60vh] flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-            </div>
-        );
-    }
-
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
             const file = e.target.files[0];
             if (validateFile(file)) {
                 setImageFile(file);
                 setPreviewUrl(URL.createObjectURL(file));
-                setResultUrl(null); // 새로운 이미지 업로드 시 결과 초기화
+                setResultUrl(null);
                 setError(null);
-                resetErrorTrap(); // 정상 업로드 시 에러 카운터 초기화
+                resetErrorTrap();
             }
         }
     };
@@ -133,6 +126,7 @@ export default function DemoPage() {
         }
 
         setIsLoading(true);
+        setJobStatus('initializing');
         setError(null);
 
         const response = await processDeidentify({
@@ -142,19 +136,30 @@ export default function DemoPage() {
             category,
             shape,
             level,
-            apiKey: selectedApiKey || undefined // 선택된 키 전달
+            apiKey: selectedApiKey || undefined,
+            onStatusUpdate: (status) => setJobStatus(status)
         });
 
         if (response.success && response.resultUrl) {
             setResultUrl(response.resultUrl);
-            resetErrorTrap(); // 성공 시 오류 트래커 리셋
+            setJobStatus('completed');
+            resetErrorTrap();
         } else {
             const errMsg = response.message || '비식별화 처리 중 오류가 발생했습니다.';
             setError(errMsg);
+            setJobStatus('failed');
             reportError(errMsg);
         }
         setIsLoading(false);
     };
+
+    if (isAuthLoading) {
+        return (
+            <div className="min-h-[60vh] flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+        );
+    }
 
     return (
         <motion.div
@@ -171,7 +176,6 @@ export default function DemoPage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Left Column: Input Controls */}
                 <div className="lg:col-span-1">
                     <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-xl h-[600px] flex flex-col">
                         <h3 className="text-lg font-medium text-white mb-6 flex items-center">
@@ -179,36 +183,36 @@ export default function DemoPage() {
                             Command Interface
                         </h3>
 
-                            <div className="space-y-4 flex-grow overflow-y-auto pr-1 no-scrollbar">
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-400 mb-1.5">API Key</label>
-                                    {apiKeys.length > 0 ? (
-                                        <div className="relative">
-                                            <select
-                                                value={selectedApiKey}
-                                                onChange={(e) => setSelectedApiKey(e.target.value)}
-                                                disabled={isLoading}
-                                                className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2.5 text-[11px] text-white focus:outline-none focus:border-blue-500 transition-all font-medium appearance-none cursor-pointer"
-                                            >
-                                                {apiKeys.map((key) => (
-                                                    <option key={key.id} value={key.secret_key}>
-                                                        {key.name} ({key.secret_key.substring(0, 10)}...)
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-500">
-                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                                            </div>
+                        <div className="space-y-4 flex-grow overflow-y-auto pr-1 no-scrollbar">
+                            <div>
+                                <label className="block text-xs font-medium text-gray-400 mb-1.5">API Key</label>
+                                {apiKeys.length > 0 ? (
+                                    <div className="relative">
+                                        <select
+                                            value={selectedApiKey}
+                                            onChange={(e) => setSelectedApiKey(e.target.value)}
+                                            disabled={isLoading}
+                                            className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2.5 text-[11px] text-white focus:outline-none focus:border-blue-500 transition-all font-medium appearance-none cursor-pointer"
+                                        >
+                                            {apiKeys.map((key) => (
+                                                <option key={key.id} value={key.secret_key}>
+                                                    {key.name} ({key.secret_key.substring(0, 10)}...)
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-500">
+                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                                         </div>
-                                    ) : (
-                                        <div className="text-[10px] text-amber-500 bg-amber-900/20 p-2 rounded-lg border border-amber-800/50">
-                                            생성된 키가 없습니다. <Link href="/keys" className="underline font-bold">Keys 페이지</Link>에서 생성해 주세요.
-                                        </div>
-                                    )}
-                                </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-[10px] text-amber-500 bg-amber-900/20 p-2 rounded-lg border border-amber-800/50">
+                                        생성된 키가 없습니다. <Link href="/keys" className="underline font-bold">Keys 페이지</Link>에서 생성해 주세요.
+                                    </div>
+                                )}
+                            </div>
 
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-400 mb-1.5">Refining Prompt</label>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-400 mb-1.5">Refining Prompt</label>
                                 <input
                                     type="text"
                                     value={prompt}
@@ -344,11 +348,9 @@ export default function DemoPage() {
                     </div>
                 </div>
 
-                {/* Right Column: Image Preview & Result */}
                 <div className="lg:col-span-2">
                     <AnimatePresence mode="wait">
                         {!previewUrl && !resultUrl ? (
-                            // 빈 업로드 공간
                             <motion.div
                                 key="upload-zone"
                                 initial={{ opacity: 0, scale: 0.95 }}
@@ -366,39 +368,76 @@ export default function DemoPage() {
                                 <p className="text-sm mt-3 text-gray-500">JPG, PNG 파일 지원 (최대 10MB)</p>
                             </motion.div>
                         ) : (
-                            // 이미지 프리뷰 / 결과 표시 영역
                             <motion.div
                                 key="preview-zone"
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
-                                className="relative bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden h-[600px] shadow-2xl flex items-center justify-center"
+                                className="relative bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden h-[600px] shadow-2xl flex flex-col"
                             >
-                                <img
-                                    src={resultUrl || previewUrl!}
-                                    alt="Working Image"
-                                    className={`max-w-full max-h-full object-contain ${isLoading ? 'opacity-40 blur-sm' : 'opacity-100'} transition-all duration-500`}
-                                />
-
-                                {/* 스캐닝/로딩 오버레이 UI */}
-                                {isLoading && (
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
-                                        <div className="w-full h-1 bg-blue-500/50 absolute top-0 animate-[scan_2s_ease-in-out_infinite] shadow-[0_0_15px_rgba(59,130,246,0.6)]" />
-                                        <div className="text-blue-400 font-mono text-xl tracking-widest bg-gray-900/80 px-6 py-2 rounded-lg border border-blue-500/30 backdrop-blur-md">
-                                            ANALYZING SUBJECT...
+                                <div className="flex-grow flex divide-x divide-gray-800 h-full overflow-hidden">
+                                    <div className="flex-1 flex flex-col relative bg-gray-950/20">
+                                        <div className="absolute top-3 left-4 z-20">
+                                            <span className="bg-gray-900/60 backdrop-blur-md text-[10px] text-gray-400 px-2.5 py-1 rounded-full border border-gray-800 font-bold tracking-wider">ORIGINAL</span>
+                                        </div>
+                                        <div className="flex-grow flex items-center justify-center p-4">
+                                            <img
+                                                src={previewUrl!}
+                                                alt="Original"
+                                                className="max-w-full max-h-full object-contain"
+                                            />
                                         </div>
                                     </div>
-                                )}
 
-                                {/* 액션 버튼들 (우측 상단) */}
-                                <div className="absolute top-4 right-4 flex gap-2">
-                                    {resultUrl && (
+                                    <div className="flex-1 flex flex-col relative bg-gray-950/40">
+                                        <div className="absolute top-3 left-4 z-20">
+                                            <span className="bg-blue-600/20 backdrop-blur-md text-[10px] text-blue-400 px-2.5 py-1 rounded-full border border-blue-500/30 font-bold tracking-wider">DE-IDENTIFIED</span>
+                                        </div>
+                                        <div className="flex-grow flex items-center justify-center p-4 relative">
+                                            {resultUrl ? (
+                                                <img
+                                                    src={resultUrl}
+                                                    alt="Result"
+                                                    className="max-w-full max-h-full object-contain animate-in fade-in duration-700"
+                                                />
+                                            ) : (
+                                                <div className="text-gray-700 font-mono text-sm">
+                                                    Waiting for AI...
+                                                </div>
+                                            )}
+
+                                            {isLoading && (
+                                                <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-gray-900/40 backdrop-blur-[2px]">
+                                                    <div className="w-full h-1 bg-blue-500/50 absolute top-0 animate-[scan_2s_ease-in-out_infinite] shadow-[0_0_15px_rgba(59,130,246,0.6)]" />
+                                                    <div className="bg-gray-900/90 px-6 py-4 rounded-xl border border-blue-500/30 backdrop-blur-md flex flex-col items-center gap-3 shadow-2xl">
+                                                        <div className="text-blue-400 font-mono text-xs tracking-widest uppercase text-center">
+                                                            {jobStatus === 'pending' ? 'QUEUEING...' : 
+                                                            jobStatus?.includes('waiting') ? 'IN QUEUE...' :
+                                                            'AI PROCESSING...'}
+                                                            <div className="mt-1 text-[10px] text-blue-500/70">{jobStatus}</div>
+                                                        </div>
+                                                        <div className="flex gap-1.5">
+                                                            <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                                                            <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                                                            <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce"></span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="absolute top-3 right-4 flex gap-2 z-30">
+                                    {resultUrl && !isLoading && (
                                         <a
                                             href={resultUrl}
-                                            download="de-identified-result.png"
-                                            className="bg-blue-600 hover:bg-blue-500 text-white p-2 rounded-lg shadow-lg border border-blue-500/50 transition-colors tooltip flex items-center justify-center w-10 h-10"
+                                            download={`masgo-result-${Date.now()}.png`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="bg-green-600 hover:bg-green-500 text-white p-2.5 rounded-xl shadow-lg border border-green-500/50 transition-all hover:scale-105 active:scale-95 flex items-center justify-center w-10 h-10"
                                             title="다운로드"
                                         >
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                                         </a>
                                     )}
                                     <button
@@ -406,12 +445,13 @@ export default function DemoPage() {
                                             setPreviewUrl(null);
                                             setResultUrl(null);
                                             setImageFile(null);
+                                            setJobStatus(null);
                                             if (fileInputRef.current) fileInputRef.current.value = '';
                                         }}
-                                        className="bg-gray-800 hover:bg-gray-700 text-gray-300 p-2 rounded-lg shadow-lg border border-gray-700 transition-colors w-10 h-10 flex items-center justify-center"
+                                        className="bg-gray-800/80 hover:bg-gray-700 text-gray-300 p-2.5 rounded-xl shadow-lg border border-gray-700 backdrop-blur-md transition-all hover:scale-105 active:scale-95 w-10 h-10 flex items-center justify-center"
                                         title="초기화"
                                     >
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
                                     </button>
                                 </div>
                             </motion.div>

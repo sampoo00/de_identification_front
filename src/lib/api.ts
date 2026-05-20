@@ -8,6 +8,7 @@ export interface DeidentifyRequest {
     shape?: 'bbox' | 'circle' | 'ellipse';
     level?: number | null; // number for 1-10, null for Auto
     apiKey?: string;
+    onStatusUpdate?: (status: string) => void;
 }
 
 export interface DeidentifyResponse {
@@ -15,6 +16,8 @@ export interface DeidentifyResponse {
     message?: string;
     resultUrl?: string;
     metadata?: any;
+    status?: string;
+    jobId?: string;
 }
 
 /**
@@ -47,31 +50,35 @@ export async function processDeidentify(req: DeidentifyRequest): Promise<Deident
     }
 
     try {
-        // 1. Enqueue the job (Default Async)
+        // 1. Enqueue the job
         const enqueueRes = await fetch(`${API_BASE_URL}/deidentify/enqueue`, {
             method: 'POST',
-            headers: {
-                'X-API-Key': apiKey,
-            },
+            headers: { 'X-API-Key': apiKey },
             body: formData,
         });
 
-        if (!enqueueRes.ok) {
-            const errorText = await enqueueRes.text();
-            return { success: false, message: `Enqueue Error: ${enqueueRes.status} - ${errorText}` };
+        const enqueueData = await enqueueRes.json();
+        const status = enqueueData.status;
+
+        if (status === 'waiting') {
+            return { success: false, message: `Queue is currently full: ${enqueueData.message}` };
         }
 
-        const enqueueData = await enqueueRes.json();
-        const jobId = enqueueData.job_id;
+        if (status !== 'queued') {
+            return { success: false, message: enqueueData.message || 'Failed to queue the task.' };
+        }
 
+        const jobId = enqueueData.job_id;
         if (!jobId) {
             return { success: false, message: 'Job ID not received from server.' };
         }
 
+        if (req.onStatusUpdate) req.onStatusUpdate('pending');
+
         // 2. Poll for status
         let attempts = 0;
-        const maxAttempts = 30; // 60 seconds max if 2s interval
-        const pollInterval = 2000; // 2 seconds
+        const maxAttempts = 60; // 120 seconds max if 2s interval
+        const pollInterval = 2000; 
 
         while (attempts < maxAttempts) {
             const statusRes = await fetch(`${API_BASE_URL}/deidentify/status/${jobId}`, {
@@ -80,27 +87,38 @@ export async function processDeidentify(req: DeidentifyRequest): Promise<Deident
 
             if (statusRes.ok) {
                 const statusData = await statusRes.json();
-                
-                if (statusData.status === 'completed') {
+                const currentStatus = statusData.status;
+
+                if (currentStatus === 'success') {
+                    if (req.onStatusUpdate) req.onStatusUpdate('completed');
                     return {
                         success: true,
-                        resultUrl: statusData.result_url || statusData.url,
-                        metadata: statusData.metadata || statusData,
+                        // 테스트 코드의 download 로직 참조: /api/v1/download/{job_id}
+                        resultUrl: `${API_BASE_URL}/download/${jobId}`,
+                        metadata: statusData.result,
+                        status: 'completed',
+                        jobId
                     };
-                } else if (statusData.status === 'failed') {
+                } else if (currentStatus === 'failed') {
+                    if (req.onStatusUpdate) req.onStatusUpdate('failed');
                     return {
                         success: false,
-                        message: statusData.message || 'Job processing failed on server.',
+                        message: statusData.error || 'Job processing failed.',
+                        status: 'failed'
                     };
+                } else if (currentStatus === 'waiting') {
+                    const pos = statusData.queue_position || 'unknown';
+                    if (req.onStatusUpdate) req.onStatusUpdate(`waiting (Pos: ${pos})`);
+                } else {
+                    if (req.onStatusUpdate) req.onStatusUpdate(currentStatus);
                 }
-                // Continue polling if 'pending' or 'processing'
             }
 
             attempts++;
             await new Promise(resolve => setTimeout(resolve, pollInterval));
         }
 
-        return { success: false, message: 'Processing timeout. Please check your network or try again later.' };
+        return { success: false, message: 'Processing timeout.' };
 
     } catch (error: any) {
         return {
