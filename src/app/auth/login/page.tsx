@@ -43,15 +43,18 @@ export default function LoginPage() {
             } else {
                 localStorage.removeItem('masgo_remembered_email');
             }
-            
-            router.push('/keys');
+
+            // returnTo 파라미터가 있으면 해당 페이지로, 없으면 홈(/)으로 이동
+            const params = new URLSearchParams(window.location.search);
+            const returnTo = params.get('returnTo');
+            router.push(returnTo || '/');
             router.refresh();
         }
     };
 
     return (
         <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-6">
-            <motion.div 
+            <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="max-w-md w-full bg-gray-900 border border-gray-800 rounded-2xl p-8 shadow-2xl"
