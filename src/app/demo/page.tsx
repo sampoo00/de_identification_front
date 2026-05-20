@@ -42,6 +42,11 @@ export default function DemoPage() {
     const [isAuthLoading, setIsAuthLoading] = useState(true);
     const [apiKeys, setApiKeys] = useState<any[]>([]);
     const [selectedApiKey, setSelectedApiKey] = useState<string>('');
+
+    // Modal state for image preview
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalImageUrl, setModalImageUrl] = useState('');
+
     const router = useRouter();
 
     // Configuration states
@@ -310,6 +315,24 @@ export default function DemoPage() {
                                         <div className="aspect-[4/3] rounded-xl overflow-hidden bg-gray-950 flex items-center justify-center">
                                             <img src={previewUrl!} alt="Original" className="max-w-full max-h-full object-contain" />
                                         </div>
+
+                                        {/* Original Action Bar */}
+                                        <div className="flex items-center justify-between mt-4">
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => {
+                                                        if (previewUrl) {
+                                                            setModalImageUrl(previewUrl);
+                                                            setIsModalOpen(true);
+                                                        }
+                                                    }}
+                                                    className="p-2.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 transition-all border border-gray-700"
+                                                    title="View Original Image"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     {/* Result Pane */}
@@ -344,7 +367,16 @@ export default function DemoPage() {
                                         {/* Action Bar */}
                                         <div className="flex items-center justify-between mt-4">
                                             <div className="flex gap-2">
-                                                <button className="p-2.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 transition-all border border-gray-700">
+                                                <button
+                                                    onClick={() => {
+                                                        if (resultUrl) {
+                                                            setModalImageUrl(resultUrl);
+                                                            setIsModalOpen(true);
+                                                        }
+                                                    }}
+                                                    className={`p-2.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 transition-all border border-gray-700 ${!resultUrl ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                    title="View Full Image"
+                                                >
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                                                 </button>
                                                 {resultUrl && (
@@ -537,6 +569,42 @@ export default function DemoPage() {
                 className="hidden"
                 accept="image/png, image/jpeg"
             />
+
+            {/* Image Preview Modal */}
+            <AnimatePresence>
+                {isModalOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-12 bg-black/90 backdrop-blur-sm"
+                        onClick={() => setIsModalOpen(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="relative max-w-full max-h-full"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <img
+                                src={modalImageUrl}
+                                alt="Full Preview"
+                                className="max-w-full max-h-[90vh] rounded-xl shadow-2xl border border-white/10"
+                            />
+                            <button
+                                onClick={() => setIsModalOpen(false)}
+                                className="absolute -top-12 right-0 p-2 text-white/50 hover:text-white transition-colors group"
+                            >
+                                <span className="text-[10px] font-black tracking-[0.2em] uppercase mr-2 opacity-0 group-hover:opacity-100 transition-all">Close</span>
+                                <svg className="w-8 h-8 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <style jsx global>{`
                 @keyframes scan {
