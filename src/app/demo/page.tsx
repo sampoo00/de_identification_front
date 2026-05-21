@@ -13,26 +13,14 @@ const EXAMPLES = [
     {
         id: 'portrait',
         url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=300',
-        prompt: 'portrait person face',
+        prompt: '사람얼굴 비식별화 해줘',
         name: 'Portrait'
-    },
-    {
-        id: 'street',
-        url: 'https://images.unsplash.com/photo-1541913080-214324ef469c?auto=format&fit=crop&q=80&w=300',
-        prompt: 'busy street crowd faces license plates',
-        name: 'Street'
     },
     {
         id: 'car',
         url: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&q=80&w=300',
-        prompt: 'luxury car license plate',
+        prompt: '차량을 비식별화 해줘',
         name: 'Automobile'
-    },
-    {
-        id: 'document',
-        url: 'https://images.unsplash.com/photo-1586281380349-631531a3b24b?auto=format&fit=crop&q=80&w=300',
-        prompt: 'medical document patient name address',
-        name: 'Document'
     }
 ];
 
@@ -216,6 +204,44 @@ export default function DemoPage() {
         setIsLoading(false);
     };
 
+    const handleDownload = async () => {
+        if (!resultUrl) return;
+
+        try {
+            const response = await fetch(resultUrl);
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+
+            // Try to get filename from original image or use default
+            let fileName = 'deidentified_image.png';
+            if (imageFile) {
+                const nameParts = imageFile.name.split('.');
+                const extension = nameParts.pop();
+                fileName = `deid_${nameParts.join('.')}.${extension}`;
+            } else if (imageUrl) {
+                const urlParts = imageUrl.split('/');
+                const lastPart = urlParts[urlParts.length - 1].split('?')[0];
+                if (lastPart.includes('.')) {
+                    const nameParts = lastPart.split('.');
+                    const extension = nameParts.pop();
+                    fileName = `deid_${nameParts.join('.')}.${extension}`;
+                }
+            }
+
+            link.setAttribute('download', fileName);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode?.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Download failed:', error);
+            // Fallback: open in new tab if blob download fails
+            window.open(resultUrl, '_blank');
+        }
+    };
+
     if (isAuthLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-950">
@@ -380,13 +406,13 @@ export default function DemoPage() {
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                                                 </button>
                                                 {resultUrl && (
-                                                    <a
-                                                        href={resultUrl}
-                                                        download
+                                                    <button
+                                                        onClick={handleDownload}
                                                         className="p-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-lg shadow-blue-600/20"
+                                                        title="Download De-identified Image"
                                                     >
                                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                                                    </a>
+                                                    </button>
                                                 )}
                                             </div>
                                             <button
