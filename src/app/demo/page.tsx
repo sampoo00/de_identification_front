@@ -67,7 +67,7 @@ export default function DemoPage() {
                 router.push('/auth/login?returnTo=/demo');
             } else {
                 setUser(user);
-                fetchApiKeys(user.id);
+                await fetchApiKeys(user.id);
                 setIsAuthLoading(false);
             }
         };
@@ -488,6 +488,11 @@ export default function DemoPage() {
                                         placeholder="e.g. 'blur all faces and car number plates'"
                                         className="w-full h-24 bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-blue-500 transition-all resize-none"
                                     />
+                                    {(category === 'SEGMENTATION' || category === 'DETECTION') && (
+                                        <p className="text-[10px] text-amber-500 mt-2 font-medium">
+                                            * SEGMENTATION과 DETECTION 카테고리에서는 프롬프트에 단어만 입력해 주세요.
+                                        </p>
+                                    )}
                                 </div>
 
                                 {/* Engine Settings */}
