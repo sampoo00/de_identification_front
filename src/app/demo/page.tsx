@@ -40,7 +40,7 @@ export default function DemoPage() {
     // Configuration states
     const [prompt, setPrompt] = useState('');
     const [category, setCategory] = useState<'VLM' | 'SEGMENTATION' | 'DETECTION'>('VLM');
-    const [shape, setShape] = useState<'bbox' | 'circle' | 'ellipse'>('bbox');
+    const [shape, setShape] = useState<'bbox' | 'circle' | 'ellipse' | 'polygon'>('bbox');
     const [level, setLevel] = useState<number | null>(null); // null is Auto
     const [target, setTarget] = useState<'inner' | 'outer'>('inner');
 
@@ -503,7 +503,14 @@ export default function DemoPage() {
                                             {['VLM', 'SEGMENTATION', 'DETECTION'].map((cat) => (
                                                 <button
                                                     key={cat}
-                                                    onClick={() => setCategory(cat as any)}
+                                                    onClick={() => {
+                                                        setCategory(cat as any);
+                                                        if (cat === 'SEGMENTATION') {
+                                                            setShape('polygon');
+                                                        } else if (cat === 'VLM' || cat === 'DETECTION') {
+                                                            setShape('bbox');
+                                                        }
+                                                    }}
                                                     className={`py-2 rounded-lg text-[9px] font-black transition-all ${category === cat
                                                         ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/40'
                                                         : 'bg-gray-800 text-gray-600 hover:text-gray-400'
@@ -517,13 +524,13 @@ export default function DemoPage() {
 
                                     <div>
                                         <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-3">Masking Shape</label>
-                                        <div className="grid grid-cols-3 gap-2">
-                                            {['bbox', 'circle', 'ellipse'].map((s) => (
+                                        <div className="grid grid-cols-4 gap-2">
+                                            {['bbox', 'circle', 'ellipse', 'polygon'].map((s) => (
                                                 <button
                                                     key={s}
-                                                    disabled={category === 'SEGMENTATION'}
+                                                    disabled={category === 'SEGMENTATION' && s !== 'polygon'}
                                                     onClick={() => setShape(s as any)}
-                                                    className={`py-2 rounded-lg text-[9px] font-black uppercase transition-all ${category === 'SEGMENTATION'
+                                                    className={`py-2 rounded-lg text-[9px] font-black uppercase transition-all ${(category === 'SEGMENTATION' && s !== 'polygon')
                                                         ? 'bg-gray-900 text-gray-800 border border-gray-800/50 cursor-not-allowed opacity-50'
                                                         : shape === s
                                                             ? 'bg-blue-600/20 text-blue-400 border border-blue-500/50'

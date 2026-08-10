@@ -5,7 +5,7 @@ export interface DeidentifyRequest {
     prompt: string;
     target: 'inner' | 'outer';
     category?: string;
-    shape?: 'bbox' | 'circle' | 'ellipse';
+    shape?: 'bbox' | 'circle' | 'ellipse' | 'polygon';
     level?: number | null; // number for 1-10, null for Auto
     apiKey?: string;
     onStatusUpdate?: (status: string) => void;
