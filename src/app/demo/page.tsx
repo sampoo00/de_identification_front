@@ -291,7 +291,7 @@ export default function DemoPage() {
                                         onClick={handleSubmit}
                                         disabled={isLoading}
                                     >
-                                        ANALYZE
+                                        APPLY
                                     </button>
                                 </div>
                                 <div className="flex-shrink-0 flex items-center justify-center">
