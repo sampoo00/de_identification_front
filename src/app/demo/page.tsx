@@ -488,9 +488,14 @@ export default function DemoPage() {
                                         placeholder="e.g. 'blur all faces and car number plates'"
                                         className="w-full h-24 bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-blue-500 transition-all resize-none"
                                     />
-                                    {(category === 'SEGMENTATION' || category === 'DETECTION') && (
+                                    {category === 'SEGMENTATION' && (
                                         <p className="text-[10px] text-amber-500 mt-2 font-medium">
-                                            * SEGMENTATION과 DETECTION 카테고리에서는 프롬프트에 단어만 입력해 주세요.
+                                            * SEGMENTATION 카테고리에서는 프롬프트에 단어만 입력해 주세요.
+                                        </p>
+                                    )}
+                                    {category === 'DETECTION' && (
+                                        <p className="text-[10px] text-amber-500 mt-2 font-medium">
+                                            * COCO 데이터셋 class 이름만 입력해 주세요.
                                         </p>
                                     )}
                                 </div>
@@ -528,9 +533,9 @@ export default function DemoPage() {
                                             {['bbox', 'circle', 'ellipse', 'polygon'].map((s) => (
                                                 <button
                                                     key={s}
-                                                    disabled={category === 'SEGMENTATION' && s !== 'polygon'}
+                                                    disabled={(category === 'SEGMENTATION' && s !== 'polygon') || (category === 'DETECTION' && s === 'polygon')}
                                                     onClick={() => setShape(s as any)}
-                                                    className={`py-2 rounded-lg text-[9px] font-black uppercase transition-all ${(category === 'SEGMENTATION' && s !== 'polygon')
+                                                    className={`py-2 rounded-lg text-[9px] font-black uppercase transition-all ${((category === 'SEGMENTATION' && s !== 'polygon') || (category === 'DETECTION' && s === 'polygon'))
                                                         ? 'bg-gray-900 text-gray-800 border border-gray-800/50 cursor-not-allowed opacity-50'
                                                         : shape === s
                                                             ? 'bg-blue-600/20 text-blue-400 border border-blue-500/50'
