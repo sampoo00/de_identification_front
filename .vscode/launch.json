@@ -19,9 +19,13 @@
       "request": "launch",
       "command": "npm run dev",
       "serverReadyAction": {
-        "pattern": "- Local:.+(https?://.+)",
-        "uriFormat": "%s",
+        "pattern": "- Local:.+http://localhost:(3000)",
+        "uriFormat": "http://localhost:%s",
         "action": "debugWithChrome"
+      },
+      "sourceMapPathOverrides": {
+        "webpack:///_N_E/*": "${workspaceFolder}/*",
+        "webpack://[location]/_*": "${workspaceFolder}/*"
       }
     }
   ]
