@@ -19,9 +19,9 @@
       "request": "launch",
       "command": "npm run dev",
       "serverReadyAction": {
-        "pattern": "- Local:.+http://localhost:(3000)",
+        "pattern": "(?:Local|Network):.+http://(?:localhost|0\\.0\\.0\\.0):([0-9]+)",
         "uriFormat": "http://localhost:%s",
-        "action": "debugWithChrome"
+        "action": "debugWithEdge"
       },
       "sourceMapPathOverrides": {
         "webpack:///_N_E/*": "${workspaceFolder}/*",
