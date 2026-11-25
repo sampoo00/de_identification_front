@@ -214,19 +214,44 @@ export default function DemoPage() {
             const link = document.createElement('a');
             link.href = url;
 
-            // Try to get filename from original image or use default
-            let fileName = 'deidentified_image.png';
-            if (imageFile) {
-                const nameParts = imageFile.name.split('.');
-                const extension = nameParts.pop();
-                fileName = `deid_${nameParts.join('.')}.${extension}`;
-            } else if (imageUrl) {
-                const urlParts = imageUrl.split('/');
-                const lastPart = urlParts[urlParts.length - 1].split('?')[0];
-                if (lastPart.includes('.')) {
-                    const nameParts = lastPart.split('.');
+            let fileName = '';
+
+            // 1. 서버가 전달한 Content-Disposition 헤더에서 파일명 추출 시도
+            const disposition = response.headers.get('Content-Disposition');
+            if (disposition && disposition.includes('filename=')) {
+                // filename*=UTF-8''... 또는 filename="..." 형태 지원
+                const filenameStarMatch = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+                if (filenameStarMatch?.[1]) {
+                    fileName = decodeURIComponent(filenameStarMatch[1]);
+                } else {
+                    const match = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                    if (match?.[1]) {
+                        fileName = match[1].replace(/['"]/g, '').trim();
+                    }
+                }
+            }
+
+            // 2. 서버 파일명이 없는 경우 X-Final-Output-Level 헤더를 활용하여 파일명 생성
+            if (!fileName) {
+                const finalLevel = response.headers.get('X-Final-Output-Level');
+                const levelTag = finalLevel ? `_lvl${finalLevel}` : '';
+
+                if (imageFile) {
+                    const nameParts = imageFile.name.split('.');
                     const extension = nameParts.pop();
-                    fileName = `deid_${nameParts.join('.')}.${extension}`;
+                    fileName = `deid_${nameParts.join('.')}${levelTag}.${extension}`;
+                } else if (imageUrl) {
+                    const urlParts = imageUrl.split('/');
+                    const lastPart = urlParts[urlParts.length - 1].split('?')[0];
+                    if (lastPart.includes('.')) {
+                        const nameParts = lastPart.split('.');
+                        const extension = nameParts.pop();
+                        fileName = `deid_${nameParts.join('.')}${levelTag}.${extension}`;
+                    } else {
+                        fileName = `deidentified_image${levelTag}.png`;
+                    }
+                } else {
+                    fileName = `deidentified_image${levelTag}.png`;
                 }
             }
 
